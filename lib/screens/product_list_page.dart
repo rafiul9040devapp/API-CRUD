@@ -28,12 +28,12 @@ class _ProductListPageState extends State<ProductListPage> {
         itemBuilder: (context, index) {
           return ListTile(
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(
-                  'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.istockphoto.com%2Fphotos%2Fnice-france&psig=AOvVaw12C7NP4flnBU8LD-wKvy5i&ust=1706767473334000&source=images&cd=vfe&opi=89978449&ved=0CBMQjRxqFwoTCLioqL36hoQDFQAAAAAdAAAAABAE'),
+              backgroundImage: NetworkImage('https://picsum.photos/200/300'),
             ),
             title: Text('Product Name'),
             subtitle: Wrap(
               crossAxisAlignment: WrapCrossAlignment.start,
+              spacing: 16,
               children: [
                 Text('Product code'),
                 Text('Product unit price'),
