@@ -24,6 +24,7 @@ class ApiCRUD extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.amberAccent,
             foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             padding: const EdgeInsets.symmetric(vertical: 12),
             textStyle: const TextStyle(
               fontSize: 18,

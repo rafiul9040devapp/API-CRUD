@@ -1,12 +1,11 @@
 import 'dart:convert';
 
-
 import 'package:api_crud/screens/add_or_edit_product.dart';
 import 'package:api_crud/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 
-import '../model/Product.dart';
+import '../model/product.dart';
 
 enum PopUpMenuTypes { edit, delete }
 
@@ -40,6 +39,18 @@ class _ProductListPageState extends State<ProductListPage> {
         ),
         centerTitle: true,
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddOrEditProduct(),
+            ),
+          );
+        },
+        label: const Text('ADD'),
+        icon: const Icon(Icons.add),
+      ),
       body: RefreshIndicator(
         onRefresh: getAllProducts,
         child: _inProgress
@@ -66,7 +77,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     ),
                     trailing: PopupMenuButton<PopUpMenuTypes>(
                       onSelected: (value) =>
-                          _onTapPopUpMenuItemSelected(value, product.id ?? ''),
+                          _onTapPopUpMenuItemSelected(value, product),
                       itemBuilder: (context) => [
                         const PopupMenuItem(
                           value: PopUpMenuTypes.edit,
@@ -92,7 +103,6 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> getAllProducts() async {
-    productList.clear();
     _inProgress = true;
     setState(() {});
     var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
@@ -104,6 +114,7 @@ class _ProductListPageState extends State<ProductListPage> {
         // for(Map<String,dynamic> responseProduct in responseData['data']) {
         //   productList.add(Product.fromJson(responseData));
         // }
+        productList.clear();
         productList = (responseData['data'] as List<dynamic>)
             .map((jsonProduct) => Product.fromJson(jsonProduct))
             .toList();
@@ -121,18 +132,45 @@ class _ProductListPageState extends State<ProductListPage> {
     setState(() {});
   }
 
-  void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, String productId) {
+  Future<void> deleteProductFromApi(String productId) async {
+    _inProgress = true;
+    setState(() {});
+
+    Uri uri = Uri.parse(
+        Constants.baseUrl + Constants.deleteProductEndPoint + productId);
+    print(productId);
+    Response response = await get(
+      uri,
+      // headers: <String, String>{
+      //   'Content-Type': 'application/json; charset=UTF-8',
+      // },
+    );
+    if (response.statusCode == 200) {
+      getAllProducts();
+    } else {
+      _inProgress = false;
+      setState(() {});
+      if (context.mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to Delete the Product'),
+          ),
+        );
+    }
+  }
+
+  void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
     switch (value) {
       case PopUpMenuTypes.edit:
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const AddOrEditProduct(),
+            builder: (context) =>  AddOrEditProduct(product: product),
           ),
         );
         break;
       case PopUpMenuTypes.delete:
-        _showDeleteAlertDialogue(productId);
+        _showDeleteAlertDialogue(product?.id ?? '');
         break;
     }
   }
@@ -176,27 +214,5 @@ class _ProductListPageState extends State<ProductListPage> {
         );
       },
     );
-  }
-
-  Future<void> deleteProductFromApi(String productId) async {
-    _inProgress = true;
-    setState(() {});
-
-    Uri uri = Uri.parse(
-        Constants.baseUrl + Constants.deleteProductEndPoint + productId);
-    print(productId);
-    Response response = await get(
-      uri,
-      // headers: <String, String>{
-      //   'Content-Type': 'application/json; charset=UTF-8',
-      // },
-    );
-    if(response.statusCode == 200){
-      getAllProducts();
-    }else{
-      _inProgress = false;
-      setState(() {});
-     if(context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to Delete the Product'),),);
-    }
   }
 }
