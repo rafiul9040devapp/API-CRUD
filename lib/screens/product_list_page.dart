@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+
+import 'package:api_crud/screens/add_or_edit_product.dart';
 import 'package:api_crud/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -17,40 +19,12 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage> {
   List<Product> productList = [];
-  bool inProgress = false;
+  bool _inProgress = false;
 
   @override
   void initState() {
     getAllProducts();
     super.initState();
-  }
-
-  Future<void> getAllProducts() async {
-    productList.clear();
-    inProgress = true;
-    setState(() {});
-    var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
-    Response response = await get(url);
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      if (responseData['status'] == "success") {
-        // productList = Product.fromJson(responseData['data']) as List<Product>;
-        // for(Map<String,dynamic> responseProduct in responseData['data']) {
-        //   productList.add(Product.fromJson(responseData));
-        // }
-        productList = (responseData['data'] as List<dynamic>).map((jsonProduct) => Product.fromJson(jsonProduct)).toList();
-      }
-    }
-    print(productList.length);
-    for(Product pro in productList){
-      print(pro.productName);
-      print(pro.img);
-      print(pro.productCode);
-      print(pro.unitPrice);
-      print(pro.totalPrice);
-    }
-    inProgress = false;
-    setState(() {});
   }
 
   @override
@@ -68,7 +42,7 @@ class _ProductListPageState extends State<ProductListPage> {
       ),
       body: RefreshIndicator(
         onRefresh: getAllProducts,
-        child: inProgress
+        child: _inProgress
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
                 itemCount: productList.length,
@@ -91,15 +65,17 @@ class _ProductListPageState extends State<ProductListPage> {
                       ],
                     ),
                     trailing: PopupMenuButton<PopUpMenuTypes>(
+                      onSelected: (value) =>
+                          _onTapPopUpMenuItemSelected(value, product.id ?? ''),
                       itemBuilder: (context) => [
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: PopUpMenuTypes.edit,
                           child: ListTile(
                             leading: Icon(Icons.edit),
                             title: Text('EDIT'),
                           ),
                         ),
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: PopUpMenuTypes.delete,
                           child: ListTile(
                             leading: Icon(Icons.delete_forever_outlined),
@@ -113,5 +89,114 @@ class _ProductListPageState extends State<ProductListPage> {
               ),
       ),
     );
+  }
+
+  Future<void> getAllProducts() async {
+    productList.clear();
+    _inProgress = true;
+    setState(() {});
+    var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
+    Response response = await get(url);
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      if (responseData['status'] == "success") {
+        // productList = Product.fromJson(responseData['data']) as List<Product>;
+        // for(Map<String,dynamic> responseProduct in responseData['data']) {
+        //   productList.add(Product.fromJson(responseData));
+        // }
+        productList = (responseData['data'] as List<dynamic>)
+            .map((jsonProduct) => Product.fromJson(jsonProduct))
+            .toList();
+      }
+    }
+    print(productList.length);
+    for (Product pro in productList) {
+      print(pro.productName);
+      print(pro.img);
+      print(pro.productCode);
+      print(pro.unitPrice);
+      print(pro.totalPrice);
+    }
+    _inProgress = false;
+    setState(() {});
+  }
+
+  void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, String productId) {
+    switch (value) {
+      case PopUpMenuTypes.edit:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AddOrEditProduct(),
+          ),
+        );
+        break;
+      case PopUpMenuTypes.delete:
+        _showDeleteAlertDialogue(productId);
+        break;
+    }
+  }
+
+  void _showDeleteAlertDialogue(String productId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Delete Product',
+            textAlign: TextAlign.center,
+          ),
+          content: const Text(
+            'Are you sure?',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.green.shade400,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                deleteProductFromApi(productId);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Delete',
+                style: TextStyle(
+                  color: Colors.redAccent.shade400,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> deleteProductFromApi(String productId) async {
+    _inProgress = true;
+    setState(() {});
+
+    Uri uri = Uri.parse(
+        Constants.baseUrl + Constants.deleteProductEndPoint + productId);
+    print(productId);
+    Response response = await get(
+      uri,
+      // headers: <String, String>{
+      //   'Content-Type': 'application/json; charset=UTF-8',
+      // },
+    );
+    if(response.statusCode == 200){
+      getAllProducts();
+    }else{
+      _inProgress = false;
+      setState(() {});
+     if(context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to Delete the Product'),),);
+    }
   }
 }
