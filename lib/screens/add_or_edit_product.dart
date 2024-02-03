@@ -109,10 +109,10 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                 ),
                 SizedBox(
                   width: MediaQuery.sizeOf(context).width,
-                  height: MediaQuery.sizeOf(context).height*.05,
+                  height: MediaQuery.sizeOf(context).height * .05,
                   child: ElevatedButton(
                     onPressed: () {
-                      if(_formKey.currentState!.validate()){
+                      if (_formKey.currentState!.validate()) {
                         if (widget.product == null) {
                           createNewProduct();
                         } else {
@@ -121,7 +121,9 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                       }
                     },
                     child: _addOrEditProductInProgress
-                        ? const CircularProgressIndicator(color: Colors.white,)
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
                         : Text(widget.product == null ? 'Create' : 'Update'),
                   ),
                 )
@@ -180,7 +182,8 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
         );
       }
       clearControllers();
-      await Future.delayed(const Duration(seconds: 2)).then((value) => Navigator.pop(context,true));
+      await Future.delayed(const Duration(seconds: 1))
+          .then((value) => Navigator.pop(context, true));
     } else if (response.statusCode == 400) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +198,57 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
   }
 
   Future<void> updateProduct() async {
+    _addOrEditProductInProgress = true;
+    setState(() {});
 
+    String productId = widget.product?.id ?? "";
+
+    Product updatedProduct = Product(
+      id: productId,
+      productName: _titleTEController.text.trim(),
+      productCode: _productCodeTEController.text.trim(),
+      img: _imageTEController.text.trim(),
+      unitPrice: _unitPriceTEController.text.trim(),
+      qty: _quantityTEController.text.trim(),
+      totalPrice: _titleTEController.text.trim(),
+      createdDate: DateTime.now().toString(),
+    );
+    Uri uri = Uri.parse(
+        Constants.baseUrl + Constants.updateProductEndPoint + productId);
+
+    Response response = await post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(updatedProduct),
+    );
+
+    if (response.statusCode == 200) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product has been updated'),
+          ),
+        );
+      }
+      clearControllers();
+      await Future.delayed(const Duration(seconds: 1))
+          .then((value) => Navigator.pop(context, true));
+    } else if (response.statusCode == 400) {
+
+      print(response.body);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid Product ID'),
+          ),
+        );
+      }
+    }
+    _addOrEditProductInProgress = false;
+    setState(() {});
   }
 
   void clearControllers() {

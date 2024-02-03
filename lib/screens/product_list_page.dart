@@ -22,7 +22,7 @@ class _ProductListPageState extends State<ProductListPage> {
 
   @override
   void initState() {
-    getAllProducts();
+    getAllProductsFromApi();
     super.initState();
   }
 
@@ -40,14 +40,12 @@ class _ProductListPageState extends State<ProductListPage> {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-         await _navigateToAddOrEditProductScreen(context);
-        },
+        onPressed: () => _navigateToAddOrEditProductScreen(context),
         label: const Text('ADD'),
         icon: const Icon(Icons.add),
       ),
       body: RefreshIndicator(
-        onRefresh: getAllProducts,
+        onRefresh: getAllProductsFromApi,
         child: _inProgress
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
@@ -98,23 +96,26 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _navigateToAddOrEditProductScreen(BuildContext context,{Product? product}) async {
-  bool updatedList= product==null ? await Navigator.push(
-       context,
-       MaterialPageRoute(
-         builder: (context) => const AddOrEditProduct(),
-       ),
-     ) : await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>  AddOrEditProduct(product: product),
-      ),
-    );
+    bool updatedList =false;
+    if(context.mounted){
+      updatedList= product==null ? await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AddOrEditProduct(),
+        ),
+      ) : await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>  AddOrEditProduct(product: product),
+        ),
+      );
+    }
     if(updatedList == true){
-      getAllProducts();
+      getAllProductsFromApi();
     }
   }
 
-  Future<void> getAllProducts() async {
+  Future<void> getAllProductsFromApi() async {
     _inProgress = true;
     setState(() {});
     var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
@@ -158,7 +159,7 @@ class _ProductListPageState extends State<ProductListPage> {
       // },
     );
     if (response.statusCode == 200) {
-      getAllProducts();
+      getAllProductsFromApi();
     } else {
       _inProgress = false;
       setState(() {});
@@ -175,12 +176,13 @@ class _ProductListPageState extends State<ProductListPage> {
   void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
     switch (value) {
       case PopUpMenuTypes.edit:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>  AddOrEditProduct(product: product),
-          ),
-        );
+        _navigateToAddOrEditProductScreen(context,product: product);
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) =>  AddOrEditProduct(product: product),
+        //   ),
+        // );
         break;
       case PopUpMenuTypes.delete:
         _showDeleteAlertDialogue(product?.id ?? '');
