@@ -33,7 +33,7 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
     initializeController();
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.product != null ? 'Edit Product' : 'Add Product'),
+        title: Text(widget.product == null ?  'Add Product' : 'Edit Product'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
