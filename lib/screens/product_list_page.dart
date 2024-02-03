@@ -40,13 +40,8 @@ class _ProductListPageState extends State<ProductListPage> {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddOrEditProduct(),
-            ),
-          );
+        onPressed: () async {
+         await _navigateToAddOrEditProductScreen(context);
         },
         label: const Text('ADD'),
         icon: const Icon(Icons.add),
@@ -102,6 +97,23 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
+  Future<void> _navigateToAddOrEditProductScreen(BuildContext context,{Product? product}) async {
+  bool updatedList= product==null ? await Navigator.push(
+       context,
+       MaterialPageRoute(
+         builder: (context) => const AddOrEditProduct(),
+       ),
+     ) : await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>  AddOrEditProduct(product: product),
+      ),
+    );
+    if(updatedList == true){
+      getAllProducts();
+    }
+  }
+
   Future<void> getAllProducts() async {
     _inProgress = true;
     setState(() {});
@@ -150,12 +162,13 @@ class _ProductListPageState extends State<ProductListPage> {
     } else {
       _inProgress = false;
       setState(() {});
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Unable to Delete the Product'),
           ),
         );
+      }
     }
   }
 

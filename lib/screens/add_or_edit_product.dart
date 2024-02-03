@@ -1,9 +1,14 @@
+import 'dart:convert';
+
+import 'package:api_crud/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 import '../model/product.dart';
 
 class AddOrEditProduct extends StatefulWidget {
   final Product? product;
+
   const AddOrEditProduct({super.key, this.product});
 
   @override
@@ -13,7 +18,8 @@ class AddOrEditProduct extends StatefulWidget {
 class _AddOrEditProductState extends State<AddOrEditProduct> {
   final TextEditingController _titleTEController = TextEditingController();
   final TextEditingController _imageTEController = TextEditingController();
-  final TextEditingController _productCodeTEController = TextEditingController();
+  final TextEditingController _productCodeTEController =
+      TextEditingController();
   final TextEditingController _quantityTEController = TextEditingController();
   final TextEditingController _unitPriceTEController = TextEditingController();
   final TextEditingController _totalPriceTEController = TextEditingController();
@@ -73,7 +79,8 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                   controller: _unitPriceTEController,
                   decoration: const InputDecoration(
                       label: Text('Unit Price'), hintText: 'Enter unit price'),
-                  validator: (value) => validateInput(value, 'Empty Unit Price'),
+                  validator: (value) =>
+                      validateInput(value, 'Empty Unit Price'),
                 ),
                 const SizedBox(
                   height: 8,
@@ -81,8 +88,10 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                 TextFormField(
                   controller: _totalPriceTEController,
                   decoration: const InputDecoration(
-                      label: Text('Total Price'), hintText: 'Enter total price'),
-                  validator: (value) => validateInput(value, 'Empty total Price'),
+                      label: Text('Total Price'),
+                      hintText: 'Enter total price'),
+                  validator: (value) =>
+                      validateInput(value, 'Empty total Price'),
                 ),
                 const SizedBox(
                   height: 8,
@@ -100,9 +109,20 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                 ),
                 SizedBox(
                   width: MediaQuery.sizeOf(context).width,
+                  height: MediaQuery.sizeOf(context).height*.05,
                   child: ElevatedButton(
-                    onPressed: () {},
-                    child: Text(widget.product == null ? 'Create' : 'Update'),
+                    onPressed: () {
+                      if(_formKey.currentState!.validate()){
+                        if (widget.product == null) {
+                          createNewProduct();
+                        } else {
+                          updateProduct();
+                        }
+                      }
+                    },
+                    child: _addOrEditProductInProgress
+                        ? const CircularProgressIndicator(color: Colors.white,)
+                        : Text(widget.product == null ? 'Create' : 'Update'),
                   ),
                 )
               ],
@@ -128,7 +148,57 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
     }
   }
 
-  void clearControllers(){
+  Future<void> createNewProduct() async {
+    _addOrEditProductInProgress = true;
+    setState(() {});
+
+    Map<String, String> inputProduct = {
+      "Img": _imageTEController.text.trim(),
+      "ProductCode": _productCodeTEController.text.trim(),
+      "ProductName": _titleTEController.text.trim(),
+      "Qty": _quantityTEController.text.trim(),
+      "TotalPrice": _totalPriceTEController.text.trim(),
+      "UnitPrice": _unitPriceTEController.text.trim(),
+    };
+
+    Uri uri = Uri.parse(Constants.baseUrl + Constants.createProductEndPoint);
+
+    Response response = await post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(inputProduct),
+    );
+
+    if (response.statusCode == 200) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product has been added'),
+          ),
+        );
+      }
+      clearControllers();
+      await Future.delayed(const Duration(seconds: 2)).then((value) => Navigator.pop(context,true));
+    } else if (response.statusCode == 400) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product code should be unique'),
+          ),
+        );
+      }
+    }
+    _addOrEditProductInProgress = false;
+    setState(() {});
+  }
+
+  Future<void> updateProduct() async {
+
+  }
+
+  void clearControllers() {
     _titleTEController.clear();
     _imageTEController.clear();
     _productCodeTEController.clear();
