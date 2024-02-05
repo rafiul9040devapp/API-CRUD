@@ -95,22 +95,25 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
-  Future<void> _navigateToAddOrEditProductScreen(BuildContext context,{Product? product}) async {
-    bool updatedList =false;
-    if(context.mounted){
-      updatedList= product==null ? await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const AddOrEditProduct(),
-        ),
-      ) : await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>  AddOrEditProduct(product: product),
-        ),
-      );
+  Future<void> _navigateToAddOrEditProductScreen(BuildContext context,
+      {Product? product}) async {
+    bool updatedList = false;
+    if (context.mounted) {
+      updatedList = product == null
+          ? await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddOrEditProduct(),
+              ),
+            )
+          : await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddOrEditProduct(product: product),
+              ),
+            );
     }
-    if(updatedList == true){
+    if (updatedList == true) {
       getAllProductsFromApi();
     }
   }
@@ -159,10 +162,16 @@ class _ProductListPageState extends State<ProductListPage> {
       // },
     );
     if (response.statusCode == 200) {
-      getAllProductsFromApi();
+      //getAllProductsFromApi();
+      productList.removeWhere((element) => element.id == productId);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product Is Deleted Successfully'),
+          ),
+        );
+      }
     } else {
-      _inProgress = false;
-      setState(() {});
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -171,12 +180,15 @@ class _ProductListPageState extends State<ProductListPage> {
         );
       }
     }
+
+    _inProgress = false;
+    setState(() {});
   }
 
   void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
     switch (value) {
       case PopUpMenuTypes.edit:
-        _navigateToAddOrEditProductScreen(context,product: product);
+        _navigateToAddOrEditProductScreen(context, product: product);
         // Navigator.push(
         //   context,
         //   MaterialPageRoute(
