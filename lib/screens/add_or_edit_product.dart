@@ -183,16 +183,6 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
   Future<void> createNewProduct() async {
     try {
       _setAddOrEditProductInProgress(true);
-
-      final Map<String, String> inputProduct = {
-        "Img": _imageTEController.text.trim(),
-        "ProductCode": _productCodeTEController.text.trim(),
-        "ProductName": _titleTEController.text.trim(),
-        "Qty": _quantityTEController.text.trim(),
-        "TotalPrice": _totalPriceTEController.text.trim(),
-        "UnitPrice": _unitPriceTEController.text.trim(),
-      };
-
       final Uri uri = Uri.parse(
           '${Constants.baseUrl}${Constants.createProductEndPoint}');
 
@@ -226,18 +216,6 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
       _setAddOrEditProductInProgress(true);
 
       String productId = widget.product?.id ?? '';
-
-      Product updatedProduct = Product(
-        id: productId,
-        productName: _titleTEController.text.trim(),
-        productCode: _productCodeTEController.text.trim(),
-        img: _imageTEController.text.trim(),
-        unitPrice: _unitPriceTEController.text.trim(),
-        qty: _quantityTEController.text.trim(),
-        totalPrice: _titleTEController.text.trim(),
-        createdDate: DateTime.now().toString(),
-      );
-
       final Uri uri = Uri.parse(
           '${Constants.baseUrl}${Constants.updateProductEndPoint}$productId');
 
