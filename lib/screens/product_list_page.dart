@@ -185,6 +185,24 @@ class _ProductListPageState extends State<ProductListPage> {
     setState(() {});
   }
 
+  void _setAddOrEditProductInProgress(bool inProgress) {
+    if (mounted) {
+      _inProgress = inProgress;
+      setState(() {});
+    }
+  }
+
+  void _showSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+    }
+  }
+
+
   void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
     switch (value) {
       case PopUpMenuTypes.edit:
