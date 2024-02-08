@@ -18,7 +18,7 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage> {
   List<Product> productList = [];
-  bool _inProgress = false;
+  bool _isFetching = false;
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _ProductListPageState extends State<ProductListPage> {
       ),
       body: RefreshIndicator(
         onRefresh: _getAllProductsFromApi,
-        child: _inProgress
+        child: _isFetching
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
                 itemCount: productList.length,
@@ -95,11 +95,22 @@ class _ProductListPageState extends State<ProductListPage> {
     );
   }
 
+  void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
+    switch (value) {
+      case PopUpMenuTypes.edit:
+        _navigateToAddOrEditProductScreen(context, product: product);
+        break;
+      case PopUpMenuTypes.delete:
+        _showDeleteAlertDialogue(product?.id ?? '');
+        break;
+    }
+  }
+
   Future<void> _navigateToAddOrEditProductScreen(BuildContext context,
       {Product? product}) async {
     bool updatedList = false;
     if (context.mounted) {
-      updatedList = product == null
+      updatedList = (product == null)
           ? await Navigator.push(
               context,
               MaterialPageRoute(
@@ -120,7 +131,7 @@ class _ProductListPageState extends State<ProductListPage> {
 
   Future<void> _getAllProductsFromApi() async {
     try {
-      _setAddOrEditProductInProgress(true);
+      _setFetchOrDeleteProductInProgress(true);
       final Uri url =
           Uri.parse('${Constants.baseUrl}${Constants.readProductEndPoint}');
       final Response response = await get(url);
@@ -138,7 +149,7 @@ class _ProductListPageState extends State<ProductListPage> {
     } catch (e) {
       _showSnackBar('An error occurred while fetching the product $e');
     } finally {
-      _setAddOrEditProductInProgress(false);
+      _setFetchOrDeleteProductInProgress(false);
     }
   }
 
@@ -146,40 +157,9 @@ class _ProductListPageState extends State<ProductListPage> {
     return (response as List<dynamic>).map((e) => Product.fromJson(e)).toList();
   }
 
-  // Future<void> getAllProductsFromApi() async {
-  //   _inProgress = true;
-  //   setState(() {});
-  //   var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
-  //   Response response = await get(url);
-  //   if (response.statusCode == 200) {
-  //     final Map<String, dynamic> responseData = jsonDecode(response.body);
-  //     if (responseData['status'] == "success") {
-  //       // productList = Product.fromJson(responseData['data']) as List<Product>;
-  //       // for(Map<String,dynamic> responseProduct in responseData['data']) {
-  //       //   productList.add(Product.fromJson(responseData));
-  //       // }
-  //       productList.clear();
-  //       productList = (responseData['data'] as List<dynamic>)
-  //           .map((jsonProduct) => Product.fromJson(jsonProduct))
-  //           .toList();
-  //     }
-  //   }
-  //   print(productList.length);
-  //   for (Product pro in productList) {
-  //     print(pro.productName);
-  //     print(pro.img);
-  //     print(pro.productCode);
-  //     print(pro.unitPrice);
-  //     print(pro.totalPrice);
-  //   }
-  //   _inProgress = false;
-  //   setState(() {});
-  // }
-
-
   Future<void> _deleteProductFromApi(String productId) async{
     try{
-      _setAddOrEditProductInProgress(true);
+      _setFetchOrDeleteProductInProgress(true);
 
       final Uri url = Uri.parse('${Constants.baseUrl}${Constants.deleteProductEndPoint}');
       final Response response = await get(url);
@@ -188,55 +168,18 @@ class _ProductListPageState extends State<ProductListPage> {
         productList.removeWhere((element) => element.id == productId);
         _showSnackBar('Product Is Deleted Successfully');
       }else{
-        _showSnackBar('Unable to Delete the Product');
+        _showSnackBar('Unable to Delete the Product. Status code: ${response.statusCode}');
       }
     }catch (e){
       _showSnackBar('An error occurred while deleting the product: $e');
     }finally{
-      _setAddOrEditProductInProgress(false);
+      _setFetchOrDeleteProductInProgress(false);
     }
   }
 
-  // Future<void> deleteProductFromApi(String productId) async {
-  //   _inProgress = true;
-  //   setState(() {});
-  //
-  //   Uri uri = Uri.parse(
-  //       Constants.baseUrl + Constants.deleteProductEndPoint + productId);
-  //   print(productId);
-  //   Response response = await get(
-  //     uri,
-  //     // headers: <String, String>{
-  //     //   'Content-Type': 'application/json; charset=UTF-8',
-  //     // },
-  //   );
-  //   if (response.statusCode == 200) {
-  //     //getAllProductsFromApi();
-  //     productList.removeWhere((element) => element.id == productId);
-  //     if (context.mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('Product Is Deleted Successfully'),
-  //         ),
-  //       );
-  //     }
-  //   } else {
-  //     if (context.mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('Unable to Delete the Product'),
-  //         ),
-  //       );
-  //     }
-  //   }
-  //
-  //   _inProgress = false;
-  //   setState(() {});
-  // }
-
-  void _setAddOrEditProductInProgress(bool inProgress) {
+  void _setFetchOrDeleteProductInProgress(bool inProgress) {
     if (mounted) {
-      _inProgress = inProgress;
+      _isFetching = inProgress;
       setState(() {});
     }
   }
@@ -251,22 +194,6 @@ class _ProductListPageState extends State<ProductListPage> {
     }
   }
 
-  void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
-    switch (value) {
-      case PopUpMenuTypes.edit:
-        _navigateToAddOrEditProductScreen(context, product: product);
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) =>  AddOrEditProduct(product: product),
-        //   ),
-        // );
-        break;
-      case PopUpMenuTypes.delete:
-        _showDeleteAlertDialogue(product?.id ?? '');
-        break;
-    }
-  }
 
   void _showDeleteAlertDialogue(String productId) {
     showDialog(

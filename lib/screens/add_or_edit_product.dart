@@ -29,8 +29,13 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
   bool _addOrEditProductInProgress = false;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
     initializeController();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
@@ -115,9 +120,9 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         if (widget.product == null) {
-                          createNewProduct();
+                          _createNewProduct();
                         } else {
-                          updatedProduct();
+                          _updatedProduct();
                         }
                       }
                     },
@@ -177,7 +182,7 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
     }
   }
 
-  Future<void> createNewProduct() async {
+  Future<void> _createNewProduct() async {
     try {
       _setAddOrEditProductInProgress(true);
       final Uri uri = Uri.parse(
@@ -208,7 +213,7 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
   }
 
 
-  Future<void> updatedProduct() async {
+  Future<void> _updatedProduct() async {
     try {
       _setAddOrEditProductInProgress(true);
 
