@@ -111,9 +111,6 @@ class _AddOrEditProductState extends State<AddOrEditProduct> {
                   width: MediaQuery
                       .sizeOf(context)
                       .width,
-                  height: MediaQuery
-                      .sizeOf(context)
-                      .height * .05,
                   child: ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
