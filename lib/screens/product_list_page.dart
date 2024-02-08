@@ -22,7 +22,7 @@ class _ProductListPageState extends State<ProductListPage> {
 
   @override
   void initState() {
-    getAllProductsFromApi();
+    _getAllProductsFromApi();
     super.initState();
   }
 
@@ -45,7 +45,7 @@ class _ProductListPageState extends State<ProductListPage> {
         icon: const Icon(Icons.add),
       ),
       body: RefreshIndicator(
-        onRefresh: getAllProductsFromApi,
+        onRefresh: _getAllProductsFromApi,
         child: _inProgress
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
@@ -114,76 +114,125 @@ class _ProductListPageState extends State<ProductListPage> {
             );
     }
     if (updatedList == true) {
-      getAllProductsFromApi();
+      _getAllProductsFromApi();
     }
   }
 
-  Future<void> getAllProductsFromApi() async {
-    _inProgress = true;
-    setState(() {});
-    var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
-    Response response = await get(url);
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      if (responseData['status'] == "success") {
-        // productList = Product.fromJson(responseData['data']) as List<Product>;
-        // for(Map<String,dynamic> responseProduct in responseData['data']) {
-        //   productList.add(Product.fromJson(responseData));
-        // }
-        productList.clear();
-        productList = (responseData['data'] as List<dynamic>)
-            .map((jsonProduct) => Product.fromJson(jsonProduct))
-            .toList();
+  Future<void> _getAllProductsFromApi() async {
+    try {
+      _setAddOrEditProductInProgress(true);
+      final Uri url =
+          Uri.parse('${Constants.baseUrl}${Constants.readProductEndPoint}');
+      final Response response = await get(url);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+        if (responseBody['status'] == 'success') {
+          productList.clear();
+          productList = _parsedProductList(responseBody['data']);
+        }
+      } else {
+        _showSnackBar(
+            'Failed to fetch product. Status code: ${response.statusCode}');
       }
+    } catch (e) {
+      _showSnackBar('An error occurred while fetching the product $e');
+    } finally {
+      _setAddOrEditProductInProgress(false);
     }
-    print(productList.length);
-    for (Product pro in productList) {
-      print(pro.productName);
-      print(pro.img);
-      print(pro.productCode);
-      print(pro.unitPrice);
-      print(pro.totalPrice);
-    }
-    _inProgress = false;
-    setState(() {});
   }
 
-  Future<void> deleteProductFromApi(String productId) async {
-    _inProgress = true;
-    setState(() {});
-
-    Uri uri = Uri.parse(
-        Constants.baseUrl + Constants.deleteProductEndPoint + productId);
-    print(productId);
-    Response response = await get(
-      uri,
-      // headers: <String, String>{
-      //   'Content-Type': 'application/json; charset=UTF-8',
-      // },
-    );
-    if (response.statusCode == 200) {
-      //getAllProductsFromApi();
-      productList.removeWhere((element) => element.id == productId);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Product Is Deleted Successfully'),
-          ),
-        );
-      }
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to Delete the Product'),
-          ),
-        );
-      }
-    }
-
-    _inProgress = false;
-    setState(() {});
+  List<Product> _parsedProductList(dynamic response){
+    return (response as List<dynamic>).map((e) => Product.fromJson(e)).toList();
   }
+
+  // Future<void> getAllProductsFromApi() async {
+  //   _inProgress = true;
+  //   setState(() {});
+  //   var url = Uri.parse(Constants.baseUrl + Constants.readProductEndPoint);
+  //   Response response = await get(url);
+  //   if (response.statusCode == 200) {
+  //     final Map<String, dynamic> responseData = jsonDecode(response.body);
+  //     if (responseData['status'] == "success") {
+  //       // productList = Product.fromJson(responseData['data']) as List<Product>;
+  //       // for(Map<String,dynamic> responseProduct in responseData['data']) {
+  //       //   productList.add(Product.fromJson(responseData));
+  //       // }
+  //       productList.clear();
+  //       productList = (responseData['data'] as List<dynamic>)
+  //           .map((jsonProduct) => Product.fromJson(jsonProduct))
+  //           .toList();
+  //     }
+  //   }
+  //   print(productList.length);
+  //   for (Product pro in productList) {
+  //     print(pro.productName);
+  //     print(pro.img);
+  //     print(pro.productCode);
+  //     print(pro.unitPrice);
+  //     print(pro.totalPrice);
+  //   }
+  //   _inProgress = false;
+  //   setState(() {});
+  // }
+
+
+  Future<void> _deleteProductFromApi(String productId) async{
+    try{
+      _setAddOrEditProductInProgress(true);
+
+      final Uri url = Uri.parse('${Constants.baseUrl}${Constants.deleteProductEndPoint}');
+      final Response response = await get(url);
+
+      if(response.statusCode ==200){
+        productList.removeWhere((element) => element.id == productId);
+        _showSnackBar('Product Is Deleted Successfully');
+      }else{
+        _showSnackBar('Unable to Delete the Product');
+      }
+    }catch (e){
+      _showSnackBar('An error occurred while deleting the product: $e');
+    }finally{
+      _setAddOrEditProductInProgress(false);
+    }
+  }
+
+  // Future<void> deleteProductFromApi(String productId) async {
+  //   _inProgress = true;
+  //   setState(() {});
+  //
+  //   Uri uri = Uri.parse(
+  //       Constants.baseUrl + Constants.deleteProductEndPoint + productId);
+  //   print(productId);
+  //   Response response = await get(
+  //     uri,
+  //     // headers: <String, String>{
+  //     //   'Content-Type': 'application/json; charset=UTF-8',
+  //     // },
+  //   );
+  //   if (response.statusCode == 200) {
+  //     //getAllProductsFromApi();
+  //     productList.removeWhere((element) => element.id == productId);
+  //     if (context.mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Product Is Deleted Successfully'),
+  //         ),
+  //       );
+  //     }
+  //   } else {
+  //     if (context.mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Unable to Delete the Product'),
+  //         ),
+  //       );
+  //     }
+  //   }
+  //
+  //   _inProgress = false;
+  //   setState(() {});
+  // }
 
   void _setAddOrEditProductInProgress(bool inProgress) {
     if (mounted) {
@@ -201,7 +250,6 @@ class _ProductListPageState extends State<ProductListPage> {
       );
     }
   }
-
 
   void _onTapPopUpMenuItemSelected(PopUpMenuTypes value, Product? product) {
     switch (value) {
@@ -245,7 +293,7 @@ class _ProductListPageState extends State<ProductListPage> {
             ),
             TextButton(
               onPressed: () async {
-                deleteProductFromApi(productId);
+                _deleteProductFromApi(productId);
                 Navigator.pop(context);
               },
               child: Text(
