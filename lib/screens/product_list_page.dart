@@ -219,7 +219,7 @@ class _ProductListPageState extends State<ProductListPage> {
               ),
             ),
             TextButton(
-              onPressed: () async {
+              onPressed: (){
                 _deleteProductFromApi(productId);
                 Navigator.pop(context);
               },
